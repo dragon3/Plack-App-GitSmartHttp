@@ -258,7 +258,14 @@ sub get_git_config {
     my $config_name = shift;
 
     my @cmd = $self->git_command( 'config', '$config_name' );
-    my $config = system(@cmd);
+    my $pid = open3( my $cin, my $cout, undef, @cmd );
+    close $cin;
+    my $config;
+    while (<$cout>) {
+        $config .= $_;
+    }
+    close $cout;
+    waitpid( $pid, 0 );
     chomp $config;
     return $config;
 }
