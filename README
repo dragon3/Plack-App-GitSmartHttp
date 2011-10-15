@@ -1,0 +1,27 @@
+This is Perl module Plack::App::GitSmartHttp.
+
+INSTALLATION
+
+Plack::App::GitSmartHttp installation is straightforward. If your CPAN shell is set up,
+you should just be able to do
+
+    % cpan Plack::App::GitSmartHttp
+
+Download it, unpack it, then build it as per the usual:
+
+    % perl Makefile.PL
+    % make && make test
+
+Then install it:
+
+    % make install
+
+DOCUMENTATION
+
+Plack::App::GitSmartHttp documentation is available as in POD. So you can do:
+
+    % perldoc Plack::App::GitSmartHttp
+
+to read the documentation online with your favorite pager.
+
+Ryuzo Yamamoto
