@@ -100,7 +100,6 @@ sub get_git_repo_dir {
     return;
 }
 
-# TODO
 sub service_rpc {
     my $self = shift;
     my $args = shift;
