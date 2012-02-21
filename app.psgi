@@ -6,6 +6,7 @@ use Plack::Builder;
 use Plack::App::GitSmartHttp;
 
 builder {
+    enable "Plack::Middleware::AccessLog", format => "combined";
     enable 'Plack::Middleware::ReverseProxy';
     Plack::App::GitSmartHttp->new(
         root          => File::Spec->catdir( dirname(__FILE__), "repos" ),

@@ -120,23 +120,6 @@ subtest 'get_info_packs' => sub {
     is( $reqfile, 'objects/info/packs' );
 };
 
-subtest 'get_text_file file' => sub {
-    my $gsh = Plack::App::GitSmartHttp->new;
-    my $req = Plack::Request->new(
-        {
-            REQUEST_METHOD => 'GET',
-            REQUEST_URI    => '/base/foo/objects/info/bar',
-            PATH_INFO      => '/base/foo/objects/info/bar',
-            QUERY_STRING   => '',
-            SERVER_NAME    => '',
-        }
-    );
-    my ( $cmd, $path, $reqfile, $rpc ) = $gsh->match_routing($req);
-    is( $cmd,     'get_text_file' );
-    is( $path,    '/base/foo' );
-    is( $reqfile, 'objects/info/bar' );
-};
-
 subtest 'get_loose_object' => sub {
     my $gsh = Plack::App::GitSmartHttp->new;
     my $req = Plack::Request->new(

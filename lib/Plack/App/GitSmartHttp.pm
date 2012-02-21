@@ -11,7 +11,9 @@ use HTTP::Date;
 use Cwd ();
 use File::Spec::Functions;
 use File::chdir;
+use Symbol qw/gensym/;
 use IPC::Open3;
+use IO::Select;
 
 our $VERSION = '0.01';
 
@@ -24,7 +26,6 @@ my @SERVICES = (
     [ 'GET', 'get_text_file',    qr{(.*?)/objects/info/alternates$} ],
     [ 'GET', 'get_text_file',    qr{(.*?)/objects/info/http-alternates$} ],
     [ 'GET', 'get_info_packs',   qr{(.*?)/objects/info/packs$} ],
-    [ 'GET', 'get_text_file',    qr{(.*?)/objects/info/[^/]*$} ],
     [ 'GET', 'get_loose_object', qr{(.*?)/objects/[0-9a-f]{2}/[0-9a-f]{38}$} ],
     [
         'GET', 'get_pack_file', qr{(.*?)/objects/pack/pack-[0-9a-f]{40}\.pack$}
@@ -40,7 +41,7 @@ sub call {
     my ( $cmd, $path, $reqfile, $rpc ) = $self->match_routing($req);
 
     return $self->return_404 unless $cmd;
-    return $self->return_405 if $cmd eq 'not_allowed';
+    return $self->return_not_allowed($env) if $cmd eq 'not_allowed';
 
     my $dir = $self->get_git_repo_dir($path);
     return $self->return_404 unless $dir;
@@ -116,15 +117,29 @@ sub service_rpc {
 
     my @cmd = $self->git_command( $rpc, '--stateless-rpc', '.' );
 
-    my $pid = open3( my $cin, my $cout, undef, @cmd );
+    my ( $cout, $cerr ) = ( gensym, gensym );
+    my $pid = open3( my $cin, $cout, $cerr, @cmd );
     print $cin $req->content;
     close $cin;
-    my $out;
-    while (<$cout>) {
-        $out .= $_;
+    my ( $out, $err, $buf ) = ( '', '', '' );
+    my $s = IO::Select->new( $cout, $cerr );
+    while ( my @ready = $s->can_read ) {
+        for my $handle (@ready) {
+            while ( sysread( $handle, $buf, 4096 ) ) {
+                if ( $handle == $cerr ) {
+                    $err .= $buf;
+                }
+                else {
+                    $out .= $buf;
+                }
+            }
+            $s->remove($handle) if eof($handle);
+        }
     }
     close $cout;
+    close $cerr;
     waitpid( $pid, 0 );
+
     $res->body($out);
     $res->finalize;
 }
@@ -140,13 +155,26 @@ sub get_info_refs {
           $self->git_command( $service, '--stateless-rpc', '--advertise-refs',
             '.' );
 
-        my $pid = open3( my $cin, my $cout, undef, @cmd );
+        my ( $cout, $cerr ) = ( gensym, gensym );
+        my $pid = open3( my $cin, $cout, $cerr, @cmd );
         close $cin;
-        my $refs;
-        while (<$cout>) {
-            $refs .= $_;
+        my ( $refs, $err, $buf ) = ( '', '', '' );
+        my $s = IO::Select->new( $cout, $cerr );
+        while ( my @ready = $s->can_read ) {
+            for my $handle (@ready) {
+                while ( sysread( $handle, $buf, 4096 ) ) {
+                    if ( $handle == $cerr ) {
+                        $err .= $buf;
+                    }
+                    else {
+                        $refs .= $buf;
+                    }
+                }
+                $s->remove($handle) if eof($handle);
+            }
         }
         close $cout;
+        close $cerr;
         waitpid( $pid, 0 );
 
         my $res = $req->new_response(200);
@@ -169,7 +197,6 @@ sub get_info_refs {
 sub dumb_info_refs {
     my $self = shift;
     my $args = shift;
-
     $self->update_server_info;
     $self->send_file( $args, "text/plain; charset=utf-8" );
 }
@@ -226,30 +253,11 @@ sub has_access {
     {
         return;
     }
-    if ( !$rpc || ( $rpc ne 'upload-pack' && $rpc ne 'receive-pack' ) ) {
-        return;
-    }
-    if ( $rpc eq 'receive-pack' ) {
-        return $self->received_pack;
-    }
-    elsif ( $rpc eq 'upload-pack' ) {
-        return $self->upload_pack;
-    }
-    return $self->get_config_setting($rpc);
-}
 
-sub get_config_setting {
-    my $self = shift;
-    my $rpc  = shift;
-
-    $rpc =~ s/-//g;
-    my $setting = $self->get_git_config("http.$rpc");
-    if ( $rpc eq 'uploadpack' ) {
-        return $setting ne 'false';
-    }
-    else {
-        return $setting eq 'true';
-    }
+    return if !$rpc;
+    return $self->received_pack if $rpc eq 'receive-pack';
+    return $self->upload_pack   if $rpc eq 'upload-pack';
+    return;
 }
 
 sub get_git_config {
@@ -257,13 +265,27 @@ sub get_git_config {
     my $config_name = shift;
 
     my @cmd = $self->git_command( 'config', '$config_name' );
-    my $pid = open3( my $cin, my $cout, undef, @cmd );
+
+    my ( $cout, $cerr ) = ( gensym, gensym );
+    my $pid = open3( my $cin, $cout, $cerr, @cmd );
     close $cin;
-    my $config;
-    while (<$cout>) {
-        $config .= $_;
+    my ( $config, $err, $buf ) = ( '', '', '' );
+    my $s = IO::Select->new( $cout, $cerr );
+    while ( my @ready = $s->can_read ) {
+        for my $handle (@ready) {
+            while ( sysread( $handle, $buf, 4096 ) ) {
+                if ( $handle == $cerr ) {
+                    $err .= $buf;
+                }
+                else {
+                    $config .= $_;
+                }
+            }
+            $s->remove($handle) if eof($handle);
+        }
     }
     close $cout;
+    close $cerr;
     waitpid( $pid, 0 );
     chomp $config;
     return $config;
@@ -308,12 +330,21 @@ sub pkt_write {
     return sprintf( '%04x', length($str) + 4 ) . $str;
 }
 
-sub return_405 {
+sub return_not_allowed {
     my $self = shift;
-    return [
-        405, [ 'Content-Type' => 'text/plain', 'Content-Length' => 18 ],
-        ['Method Not Allowed']
-    ];
+    my $env  = shift;
+    if ( $env->{SERVER_PROTOCOL} eq 'HTTP/1.1' ) {
+        return [
+            405, [ 'Content-Type' => 'text/plain', 'Content-Length' => 18 ],
+            ['Method Not Allowed']
+        ];
+    }
+    else {
+        return [
+            400, [ 'Content-Type' => 'text/plain', 'Content-Length' => 11 ],
+            ['Bad Request']
+        ];
+    }
 }
 
 sub return_403 {
