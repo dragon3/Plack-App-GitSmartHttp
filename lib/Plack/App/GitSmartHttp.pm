@@ -260,37 +260,6 @@ sub has_access {
     return;
 }
 
-sub get_git_config {
-    my $self        = shift;
-    my $config_name = shift;
-
-    my @cmd = $self->git_command( 'config', '$config_name' );
-
-    my ( $cout, $cerr ) = ( gensym, gensym );
-    my $pid = open3( my $cin, $cout, $cerr, @cmd );
-    close $cin;
-    my ( $config, $err, $buf ) = ( '', '', '' );
-    my $s = IO::Select->new( $cout, $cerr );
-    while ( my @ready = $s->can_read ) {
-        for my $handle (@ready) {
-            while ( sysread( $handle, $buf, 4096 ) ) {
-                if ( $handle == $cerr ) {
-                    $err .= $buf;
-                }
-                else {
-                    $config .= $_;
-                }
-            }
-            $s->remove($handle) if eof($handle);
-        }
-    }
-    close $cout;
-    close $cerr;
-    waitpid( $pid, 0 );
-    chomp $config;
-    return $config;
-}
-
 sub send_file {
     my $self = shift;
     my ( $args, $content_type ) = @_;
