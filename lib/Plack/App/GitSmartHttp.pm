@@ -351,13 +351,16 @@ __END__
 
   use Plack::App::GitSmartHttp;
 
+  Plack::App::GitSmartHttp->new(
+      root          => '/var/git/repos',
+      git_path      => '/usr/bin/git',
+      upload_pack   => 1,
+      received_pack => 1
+  )->to_app;
+
 =head1 DESCRIPTION
 
-  Plack::App::GitSmartHttp is Git Smart HTTP Server Plack Implementation.
-
-=head1 WARNING
-
-  This software is under the heavy development and considered ALPHA quality.
+  Plack::App::GitSmartHttp is Git Smart HTTP Server PSGI(Plack) Implementation.
 
 =head1 AUTHOR
 
@@ -366,6 +369,7 @@ __END__
 =head1 SEE ALSO
 
   Smart HTTP Transport : <http://progit.org/2010/03/04/smart-http.html>
+  Grack : <https://github.com/schacon/grack>
 
 =head1 LICENSE
 
