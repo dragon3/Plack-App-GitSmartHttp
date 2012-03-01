@@ -1,4 +1,3 @@
-.gitignore
 Changes
 eg/app-auth-basic.psgi
 eg/app-simple.psgi
@@ -18,8 +17,6 @@ lib/Plack/App/GitSmartHttp.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
-MYMETA.json
-MYMETA.yml
 README
 t/00_compile.t
 t/01_match_routing.t

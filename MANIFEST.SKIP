@@ -14,8 +14,10 @@
 ^t/perlcritic
 ^tools/
 \.svn/
-\.git/
 ^[^/]+\.yaml$
 ^[^/]+\.pl$
 ^\.shipit$
+\.git
+nytprof/
+MYMETA
 ^repos$
