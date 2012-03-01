@@ -1,6 +1,7 @@
 .gitignore
-app.psgi
 Changes
+eg/app-auth-basic.psgi
+eg/app-simple.psgi
 inc/Module/Install.pm
 inc/Module/Install/AuthorTests.pm
 inc/Module/Install/Base.pm
