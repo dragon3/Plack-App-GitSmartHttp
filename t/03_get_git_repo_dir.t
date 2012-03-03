@@ -1,10 +1,12 @@
 use strict;
 use Test::More;
 
-BEGIN { use_ok 'Plack::App::GitSmartHttp' }
+use File::Which qw(which);
+plan skip_all => 'could not find git' unless which('git');
 
 use File::Spec::Functions qw(:ALL);
 use File::Temp qw(tempdir);
+use Plack::App::GitSmartHttp;
 
 subtest "has root" => sub {
     my $root = tempdir;

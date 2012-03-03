@@ -1,9 +1,11 @@
 use strict;
 use Test::More;
 
-BEGIN { use_ok 'Plack::App::GitSmartHttp' }
+use File::Which qw(which);
+plan skip_all => 'could not find git' unless which('git');
 
 use Plack::Request;
+use Plack::App::GitSmartHttp;
 
 subtest 'git-upload-pack' => sub {
     my $gsh = Plack::App::GitSmartHttp->new;

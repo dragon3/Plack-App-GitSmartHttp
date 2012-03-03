@@ -1,10 +1,12 @@
 use strict;
 use Test::More;
 
+use File::Which qw(which);
+plan skip_all => 'could not find git' unless which('git');
+
 use Plack::Test;
 use HTTP::Request::Common;
-
-BEGIN { use_ok 'Plack::App::GitSmartHttp' }
+use Plack::App::GitSmartHttp;
 
 my $app = Plack::App::GitSmartHttp->new(
     root          => "t/test_repos",
