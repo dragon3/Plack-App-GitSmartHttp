@@ -360,7 +360,7 @@ __END__
 
 =head1 NAME
 
-  Plack::App::GitSmartHttp
+  Plack::App::GitSmartHttp - Git Smart HTTP Server PSGI(Plack) Implementation
 
 =head1 SYNOPSIS
 
