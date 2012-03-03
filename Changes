@@ -1,4 +1,7 @@
 Revision history for Perl extension Plack::App::GitSmartHttp
 
+0.02    Sat Mar  3 13:49:00 2012
+        - fix tests
+
 0.01    Thu Apr 28 15:39:53 2011
         - original version

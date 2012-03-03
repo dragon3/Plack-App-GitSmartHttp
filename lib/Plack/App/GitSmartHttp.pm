@@ -16,7 +16,7 @@ use Symbol qw(gensym);
 use IPC::Open3;
 use IO::Select;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 my @SERVICES = (
     [ 'POST', 'service_rpc', qr{(.*?)/git-upload-pack$},  'upload-pack' ],
