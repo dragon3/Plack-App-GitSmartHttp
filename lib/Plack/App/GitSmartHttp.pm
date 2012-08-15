@@ -135,7 +135,7 @@ sub service_rpc {
 
     my $req_content = $req->content;
     if ( exists $req->env->{HTTP_CONTENT_ENCODING}
-        && $req->env->{HTTP_CONTENT_ENCODING} eq 'gzip' )
+        && $req->env->{HTTP_CONTENT_ENCODING} =~ /^(?:x-)?gzip$/ )
     {
         my $gunzipped;
         my $status = gunzip \$req_content => \$gunzipped;

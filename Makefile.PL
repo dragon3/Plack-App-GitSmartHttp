@@ -10,6 +10,7 @@ requires 'File::Spec';
 requires 'File::chdir';
 requires 'File::Which';
 requires 'IPC::Open3';
+requires 'IO::Uncompress::Gunzip';
 
 tests 't/*.t';
 author_tests 'xt';
@@ -17,6 +18,7 @@ author_tests 'xt';
 build_requires 'Test::More';
 build_requires 'File::Copy::Recursive';
 build_requires 'File::Path';
+build_requires 'IO::Compress::Gzip';
 
 auto_set_repository;
 auto_include;
