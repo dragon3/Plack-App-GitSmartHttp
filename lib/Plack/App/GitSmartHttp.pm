@@ -15,6 +15,7 @@ use File::Which qw(which);
 use Symbol qw(gensym);
 use IPC::Open3;
 use IO::Select;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
 our $VERSION = '0.02';
 
@@ -132,9 +133,22 @@ sub service_rpc {
 
     my @cmd = $self->git_command( $rpc, '--stateless-rpc', '.' );
 
+    my $req_content = $req->content;
+    if ( exists $req->env->{HTTP_CONTENT_ENCODING}
+        && $req->env->{HTTP_CONTENT_ENCODING} eq 'gzip' )
+    {
+        my $gunzipped;
+        my $status = gunzip \$req_content => \$gunzipped;
+        unless ($status) {
+            $req->env->{'psgi.errors'}->print("gunzip failed: $GunzipError");
+            return $self->return_400;
+        }
+        $req_content = $gunzipped;
+    }
+
     my ( $cout, $cerr ) = ( gensym, gensym );
     my $pid = open3( my $cin, $cout, $cerr, @cmd );
-    print $cin $req->content;
+    print $cin $req_content;
     close $cin;
     my ( $out, $err, $buf ) = ( '', '', '' );
     my $s = IO::Select->new( $cout, $cerr );
@@ -154,6 +168,11 @@ sub service_rpc {
     close $cout;
     close $cerr;
     waitpid( $pid, 0 );
+
+    if ($err) {
+        $req->env->{'psgi.errors'}->print("git command failed: $err");
+        return $self->return_400;
+    }
 
     $res->body($out);
     $res->finalize;
@@ -191,6 +210,11 @@ sub get_info_refs {
         close $cout;
         close $cerr;
         waitpid( $pid, 0 );
+
+        if ($err) {
+            $req->env->{'psgi.errors'}->print("git command failed: $err");
+            return $self->return_400;
+        }
 
         my $res = $req->new_response(200);
         $res->headers(
