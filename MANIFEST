@@ -1,6 +1,8 @@
 Changes
 eg/app-auth-basic.psgi
 eg/app-simple.psgi
+inc/File/Copy/Recursive.pm
+inc/File/Path.pm
 inc/Module/Install.pm
 inc/Module/Install/AuthorTests.pm
 inc/Module/Install/Base.pm
