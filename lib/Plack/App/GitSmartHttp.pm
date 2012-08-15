@@ -17,7 +17,7 @@ use IPC::Open3;
 use IO::Select;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 my @SERVICES = (
     [ 'POST', 'service_rpc', qr{(.*?)/git-upload-pack$},  'upload-pack' ],

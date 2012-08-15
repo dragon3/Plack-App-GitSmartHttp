@@ -1,5 +1,8 @@
 Revision history for Perl extension Plack::App::GitSmartHttp
 
+0.03    Wed Aug 15 13:46:41 2012
+        - fix gzipped request body handling
+
 0.02    Sat Mar  3 13:49:00 2012
         - fix tests
 
