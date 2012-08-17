@@ -5,7 +5,6 @@ use File::Which qw(which);
 plan skip_all => 'could not find git' unless which('git');
 
 use IO::Compress::Gzip qw(gzip);
-use IO::String;
 
 use Plack::Test;
 use HTTP::Request::Common;
