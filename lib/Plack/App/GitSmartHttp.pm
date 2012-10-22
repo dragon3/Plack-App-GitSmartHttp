@@ -15,10 +15,11 @@ use File::Which qw(which);
 use Symbol qw(gensym);
 use IPC::Open3;
 use IO::Select;
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use IO::Uncompress::Gunzip qw($GunzipError);
 
-our $VERSION = '0.03';
+use constant BUFFER_SIZE => 8192;
 
+our $VERSION = '0.04';
 my @SERVICES = (
     [ 'POST', 'service_rpc', qr{(.*?)/git-upload-pack$},  'upload-pack' ],
     [ 'POST', 'service_rpc', qr{(.*?)/git-receive-pack$}, 'receive-pack' ],
@@ -133,28 +134,29 @@ sub service_rpc {
 
     my @cmd = $self->git_command( $rpc, '--stateless-rpc', '.' );
 
-    my $req_content = $req->content;
+    my $input = $req->input;
     if ( exists $req->env->{HTTP_CONTENT_ENCODING}
         && $req->env->{HTTP_CONTENT_ENCODING} =~ /^(?:x-)?gzip$/ )
     {
-        my $gunzipped;
-        my $status = gunzip \$req_content => \$gunzipped;
-        unless ($status) {
+        $input = IO::Uncompress::Gunzip->new($input);
+        unless ($input) {
             $req->env->{'psgi.errors'}->print("gunzip failed: $GunzipError");
             return $self->return_400;
         }
-        $req_content = $gunzipped;
     }
-
     my ( $cout, $cerr ) = ( gensym, gensym );
     my $pid = open3( my $cin, $cout, $cerr, @cmd );
-    print $cin $req_content;
+    while ( $input->read( my $buf, BUFFER_SIZE ) > 0 ) {
+        print $cin $buf;
+    }
     close $cin;
+
     my ( $out, $err, $buf ) = ( '', '', '' );
     my $s = IO::Select->new( $cout, $cerr );
     while ( my @ready = $s->can_read ) {
+
         for my $handle (@ready) {
-            while ( sysread( $handle, $buf, 4096 ) ) {
+            while ( sysread( $handle, $buf, BUFFER_SIZE ) ) {
                 if ( $handle == $cerr ) {
                     $err .= $buf;
                 }
@@ -196,7 +198,7 @@ sub get_info_refs {
         my $s = IO::Select->new( $cout, $cerr );
         while ( my @ready = $s->can_read ) {
             for my $handle (@ready) {
-                while ( sysread( $handle, $buf, 4096 ) ) {
+                while ( sysread( $handle, $buf, BUFFER_SIZE ) ) {
                     if ( $handle == $cerr ) {
                         $err .= $buf;
                     }
@@ -287,8 +289,8 @@ sub has_access {
     my ( $req, $rpc, $check_content_type ) = @_;
 
     if (   $check_content_type
-        && $req->content_type ne sprintf( "application/x-git-%s-request", $rpc )
-      )
+        && $req->content_type ne
+        sprintf( "application/x-git-%s-request", $rpc ) )
     {
         return;
     }
