@@ -19,7 +19,7 @@ use IO::Uncompress::Gunzip qw($GunzipError);
 
 use constant BUFFER_SIZE => 8192;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 my @SERVICES = (
     [ 'POST', 'service_rpc', qr{(.*?)/git-upload-pack$},  'upload-pack' ],
     [ 'POST', 'service_rpc', qr{(.*?)/git-receive-pack$}, 'receive-pack' ],
@@ -128,10 +128,6 @@ sub service_rpc {
     return $self->return_403
       unless $self->has_access( $req, $rpc, 1 );
 
-    my $res = $req->new_response(200);
-    $res->headers(
-        [ 'Content-Type' => sprintf( 'application/x-git-%s-result', $rpc ), ] );
-
     my @cmd = $self->git_command( $rpc, '--stateless-rpc', '.' );
 
     my $input = $req->input;
@@ -146,38 +142,55 @@ sub service_rpc {
     }
     my ( $cout, $cerr ) = ( gensym, gensym );
     my $pid = open3( my $cin, $cout, $cerr, @cmd );
-    while ( $input->read( my $buf, BUFFER_SIZE ) > 0 ) {
+    my $input_len = 0;
+    while ( my $len = $input->read( my $buf, BUFFER_SIZE ) > 0 ) {
         print $cin $buf;
+        $input_len += $len;
     }
     close $cin;
-
-    my ( $out, $err, $buf ) = ( '', '', '' );
-    my $s = IO::Select->new( $cout, $cerr );
-    while ( my @ready = $s->can_read ) {
-
-        for my $handle (@ready) {
-            while ( sysread( $handle, $buf, BUFFER_SIZE ) ) {
-                if ( $handle == $cerr ) {
-                    $err .= $buf;
-                }
-                else {
-                    $out .= $buf;
-                }
-            }
-            $s->remove($handle) if eof($handle);
-        }
-    }
-    close $cout;
-    close $cerr;
-    waitpid( $pid, 0 );
-
-    if ($err) {
-        $req->env->{'psgi.errors'}->print("git command failed: $err");
+    if ( $input_len == 0 ) {
+        close $cout;
+        close $cerr;
+        waitpid( $pid, 0 );
         return $self->return_400;
     }
 
-    $res->body($out);
-    $res->finalize;
+    return sub {
+        my $respond = shift;
+        my $writer  = $respond->(
+            [
+                200,
+                [
+                    'Content-Type' =>
+                      sprintf( 'application/x-git-%s-result', $rpc ),
+                ]
+            ]
+        );
+
+        my ( $out, $err, $buf ) = ( '', '', '' );
+        my $s = IO::Select->new( $cout, $cerr );
+        while ( my @ready = $s->can_read ) {
+            for my $handle (@ready) {
+                while ( sysread( $handle, $buf, BUFFER_SIZE ) ) {
+                    if ( $handle == $cerr ) {
+                        $err .= $buf;
+                    }
+                    else {
+                        $writer->write($buf);
+                    }
+                }
+                $s->remove($handle) if eof($handle);
+            }
+        }
+        close $cout;
+        close $cerr;
+        waitpid( $pid, 0 );
+
+        if ($err) {
+            $req->env->{'psgi.errors'}->print("git command failed: $err");
+        }
+        $writer->close();
+      }
 }
 
 sub get_info_refs {

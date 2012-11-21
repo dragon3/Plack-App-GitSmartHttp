@@ -11,6 +11,8 @@ use Plack::Test;
 use HTTP::Request::Common;
 use Plack::App::GitSmartHttp;
 
+$Plack::Test::Impl = "Server";
+
 my $app = Plack::App::GitSmartHttp->new(
     root          => "t/test_repos",
     upload_pack   => 1,
