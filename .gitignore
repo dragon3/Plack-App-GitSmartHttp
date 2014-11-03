@@ -12,3 +12,11 @@ nytprof.out
 MANIFEST.bak
 *.sw[po]
 repos
+/Plack-App-GitSmartHttp-*
+/.build
+/_build_params
+/Build
+/Build.bat
+!Build/
+!META.json
+!LICENSE

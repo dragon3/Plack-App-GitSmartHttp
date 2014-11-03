@@ -1,5 +1,7 @@
 Revision history for Perl extension Plack::App::GitSmartHttp
 
+{{$NEXT}}
+
 0.05    Wed Nov 21 23:49:11 JST 2012
         - improve response handling ( fix bad on memory handling )
 
