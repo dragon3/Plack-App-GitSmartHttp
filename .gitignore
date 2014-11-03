@@ -15,6 +15,7 @@ repos
 /Plack-App-GitSmartHttp-*
 /.build
 /_build_params
+/_build
 /Build
 /Build.bat
 !Build/
