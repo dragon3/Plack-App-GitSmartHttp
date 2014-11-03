@@ -19,7 +19,7 @@ use IO::Uncompress::Gunzip qw($GunzipError);
 
 use constant BUFFER_SIZE => 8192;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 my @SERVICES = (
     [ 'POST', 'service_rpc', qr{(.*?)/git-upload-pack$},  'upload-pack' ],
     [ 'POST', 'service_rpc', qr{(.*?)/git-receive-pack$}, 'receive-pack' ],
