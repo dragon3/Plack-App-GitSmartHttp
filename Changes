@@ -2,6 +2,10 @@ Revision history for Perl extension Plack::App::GitSmartHttp
 
 {{$NEXT}}
 
+0.07 2014-11-22T08:08:10Z
+        - add missing dependency module for test
+          https://github.com/dragon3/Plack-App-GitSmartHttp/issues/1
+
 0.06 2014-11-03T14:14:45Z
         - minil migrate
 

@@ -4,7 +4,7 @@
       "Ryuzo Yamamoto <ryuzo.yamamoto@gmail.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v2.2.0, CPAN::Meta::Converter version 2.142690",
+   "generated_by" : "Minilla/v2.2.1, CPAN::Meta::Converter version 2.142690",
    "license" : [
       "perl_5"
    ],
@@ -57,6 +57,11 @@
             "Plack" : "0",
             "parent" : "0"
          }
+      },
+      "test" : {
+         "requires" : {
+            "File::Copy::Recursive" : "0"
+         }
       }
    },
    "release_status" : "unstable",
@@ -71,5 +76,5 @@
          "web" : "https://github.com/dragon3/Plack-App-GitSmartHttp"
       }
    },
-   "version" : "0.06"
+   "version" : "0.07"
 }
