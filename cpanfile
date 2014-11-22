@@ -11,3 +11,7 @@ requires 'parent';
 on build => sub {
     requires 'ExtUtils::MakeMaker', '6.36';
 };
+
+on test => sub {
+    requires 'File::Copy::Recursive';
+};
