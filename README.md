@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/dragon3/Plack-App-GitSmartHttp.svg?branch=master)](https://travis-ci.org/dragon3/Plack-App-GitSmartHttp) [![Coverage Status](https://img.shields.io/coveralls/dragon3/Plack-App-GitSmartHttp/master.svg)](https://coveralls.io/r/dragon3/Plack-App-GitSmartHttp?branch=master)
+[![Build Status](https://travis-ci.org/dragon3/Plack-App-GitSmartHttp.svg?branch=master)](https://travis-ci.org/dragon3/Plack-App-GitSmartHttp) [![Coverage Status](https://img.shields.io/coveralls/dragon3/Plack-App-GitSmartHttp/master.svg?style=flat)](https://coveralls.io/r/dragon3/Plack-App-GitSmartHttp?branch=master)
 # NAME
 
     Plack::App::GitSmartHttp - Git Smart HTTP Server PSGI(Plack) Implementation
